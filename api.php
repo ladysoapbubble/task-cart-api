@@ -1,6 +1,5 @@
 <?php
-abstract class API
-{
+abstract class API {
 
 	protected $method = '';
 
@@ -14,7 +13,6 @@ abstract class API
 	const STATUS_WRONG_PARAM = 400;
 
 
-
 	public function __construct($request, $data) {
 
 		header("Access-Control-Allow-Orgin: *");
@@ -26,24 +24,26 @@ abstract class API
 		$this->endpoint = array_shift($this->args);
 
 		$getarg = array();
-		for($i=0; $i < count($this->args); $i+=2) {
-			$getarg[$this->args[$i]] = $this->args[$i+1];
+		for($i = 0; $i < count($this->args); $i += 2) {
+			$getarg[$this->args[$i]] = $this->args[$i + 1];
 
 		}
 		$this->args = $getarg;
 
 
-		if (!empty($data)) $this->args = array_merge($this->args, $data );
+		if(!empty($data)) $this->args = array_merge($this->args, $data);
 
 
 		$this->method = $_SERVER['REQUEST_METHOD'];
-		if ($this->method == 'POST' && array_key_exists('HTTP_X_HTTP_METHOD', $_SERVER)) {
-			if ($_SERVER['HTTP_X_HTTP_METHOD'] == 'DELETE') {
+		if($this->method == 'POST' && array_key_exists('HTTP_X_HTTP_METHOD', $_SERVER)) {
+			if($_SERVER['HTTP_X_HTTP_METHOD'] == 'DELETE') {
 				$this->method = 'DELETE';
-			} else if ($_SERVER['HTTP_X_HTTP_METHOD'] == 'PUT') {
-				$this->method = 'PUT';
 			} else {
-				throw new Exception("Unexpected Header");
+				if($_SERVER['HTTP_X_HTTP_METHOD'] == 'PUT') {
+					$this->method = 'PUT';
+				} else {
+					throw new Exception("Unexpected Header");
+				}
 			}
 		}
 
@@ -72,24 +72,24 @@ abstract class API
 				"message" => ""
 			)
 		);
-		if ((int)method_exists($this, $this->endpoint) > 0) {
+		if((int)method_exists($this, $this->endpoint) > 0) {
 			return $this->_response($this->{$this->endpoint}($this->args));
 		}
 
 		$data["message"] = "Unable to resolve the request {$this->endpoint}";
-		return $this->_response(array("status" => self::STATUS_NOT_FOUND ,"data" => $data));
+		return $this->_response(array("status" => self::STATUS_NOT_FOUND, "data" => $data));
 	}
 
 	private function _response($data) {
 		$status = $data["status"];
-		header("HTTP/1.1 " . $status . " " . $this->_requestStatus($status));
+		header("HTTP/1.1 ".$status." ".$this->_requestStatus($status));
 		return json_encode($data["data"]);
 	}
 
 	private function _cleanInputs($data) {
 		$clean_input = Array();
-		if (is_array($data)) {
-			foreach ($data as $k => $v) {
+		if(is_array($data)) {
+			foreach($data as $k => $v) {
 				$clean_input[$k] = $this->_cleanInputs($v);
 			}
 		} else {
@@ -105,12 +105,11 @@ abstract class API
 			self::STATUS_WRONG_PARAM => 'Wrong Param',
 			500 => 'Internal Server Error',
 		);
-		return ($status[$code])?$status[$code]:$status[500];
+		return ($status[$code]) ? $status[$code] : $status[500];
 	}
 }
 
-class CartAPI extends API
-{
+class CartAPI extends API {
 
 	protected function products() {
 		$data = array(
@@ -125,7 +124,7 @@ class CartAPI extends API
 			try {
 				$res["status"] = self::STATUS_OK;
 				$res["data"] = Products::getList();
- 			} catch (Exception $e) {
+			} catch(Exception $e) {
 				$res["status"] = self::STATUS_WRONG_PARAM;
 				$data["error"]["message"] = $e->getMessage();
 				$res["data"] = $data;
@@ -159,15 +158,24 @@ class CartAPI extends API
 		try {
 			if($this->method == 'POST' || $this->method == 'DELETE') {
 				if(empty($args["product_id"])) {
-					$data["error"]["message"]  = "Product id cannot be blank";
+					$data["error"]["message"] = "Product id cannot be blank";
 					$res["data"] = $data;
 					return $res;
 				}
-				if($this->method == 'POST'  && empty($args["quantity"])) {
+				$product_id = $args["product_id"];
+
+				if(Products::isExist($product_id) == FALSE) {
+					$data["error"]["message"] = "Product with ID=$product_id is not found.";
+					$res["data"] = $data;
+					return $res;
+				}
+
+				if($this->method == 'POST' && empty($args["quantity"])) {
 					$data["error"]["message"] = "Quantity cannot be blank";
 					$res["data"] = $data;
 					return $res;
 				}
+				$quantity = $args["quantity"];
 			}
 
 
@@ -175,11 +183,7 @@ class CartAPI extends API
 				$res["data"] = Cart::getCart();
 				$res["status"] = self::STATUS_OK;
 
-			} elseif ($this->method == 'POST') {
-
-				$product_id = $args["product_id"];
-				$quantity = $args["quantity"];
-
+			} elseif($this->method == 'POST') {
 				Cart::addProduct($product_id, $quantity);
 
 				$res["data"] = "";
@@ -187,14 +191,13 @@ class CartAPI extends API
 
 			} elseif($this->method == 'DELETE') {
 
-				$product_id = $args["product_id"];
 				Cart::deleteProduct($product_id);
 				$res["data"] = "";
 				$res["status"] = self::STATUS_OK;
 
 			}
 
-		} catch (Exception $e) {
+		} catch(Exception $e) {
 
 			$data["error"]["message"] = $e->getMessage();
 			$res["data"] = $data;

@@ -1,5 +1,4 @@
 <?php
-include("Products.php");
 Class Cart {
 
 	private static $products;
@@ -7,6 +6,7 @@ Class Cart {
 	private function __construct() { }
 
 	public static function initCart() {
+
 		if(!empty($_SESSION["cart"])) {
 			self::$products = $_SESSION["cart"];
 		} else {
@@ -45,9 +45,7 @@ Class Cart {
 	}
 
 	public static function addProduct($product_id, $quantity) {
-		if(Products::isExist($product_id) === false) {
-			throw new Exception (" Product with ID=$product_id is not found. ");
-		}
+
 		if ( is_int($quantity)==false || $quantity < 0 || $quantity > 10) {
 			throw new Exception ("Quantity must be integer value from 1 to 10. Not $quantity. ");
 		}
@@ -63,9 +61,7 @@ Class Cart {
 	}
 
 	public static function deleteProduct($product_id) {
-		if(Products::isExist($product_id) == false) {
-			throw new Exception ("Product with ID=$product_id is not found.");
-		}
+
 		if(empty(self::$products[$product_id])) {
 			throw new Exception ("Product with ID=$product_id is not found at cart.");
 		}
