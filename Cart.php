@@ -10,7 +10,6 @@ Class Cart {
 		if(!empty($_SESSION["cart"])) {
 			self::$products = $_SESSION["cart"];
 		} else {
-
 			self::$products = array();
 		}
 		self::updateSession();
@@ -21,7 +20,7 @@ Class Cart {
 		$totalSum = 0;
 		$totalQuantity = 0;
 		$result = array();
-		foreach (self::$products as $id => $product) {
+		foreach(self::$products as $id => $product) {
 			$result["products"][]= array(
 				"id" => $id,
 				"quantity" => $product["quantity"],
@@ -46,7 +45,7 @@ Class Cart {
 
 	public static function addProduct($product_id, $quantity) {
 
-		if ( is_int($quantity)==false || $quantity < 0 || $quantity > 10) {
+		if(is_int($quantity)==false || $quantity < 0 || $quantity > 10) {
 			throw new Exception ("Quantity must be integer value from 1 to 10. Not $quantity. ");
 		}
 		if(!empty(self::$products[$product_id])) {
